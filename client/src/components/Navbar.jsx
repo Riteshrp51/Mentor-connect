@@ -92,9 +92,17 @@ const Navbar = ({ theme, onToggleTheme }) => {
       <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container nav-container">
           <Link to="/" className="logo-link" onClick={closeMobileMenu}>
-            <div className="logo-icon-wrapper">
-              <GraduationCap size={22} strokeWidth={2.5} />
-            </div>
+            <img
+              src="/logo.png"
+              alt="MentorConnect"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
             <span>MentorConnect</span>
           </Link>
 

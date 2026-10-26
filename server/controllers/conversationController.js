@@ -412,3 +412,112 @@ export const sendMessage = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Get summary of unread messages & unread chats count for authenticated user
+ * @route   GET /api/conversations/unread-summary
+ * @access  Private
+ */
+export const getUnreadSummary = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Find all conversations where current user is a participant
+    const userConversations = await Conversation.find({ participants: userId }).select('_id');
+    const convIds = userConversations.map((c) => c._id);
+
+    if (convIds.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          unreadChatsCount: 0,
+          totalUnreadMessages: 0,
+        },
+      });
+    }
+
+    // Total unread messages across all conversations
+    const totalUnreadMessages = await Message.countDocuments({
+      conversationId: { $in: convIds },
+      sender: { $ne: userId },
+      readBy: { $ne: userId },
+    });
+
+    // Count distinct conversations having unread messages
+    const unreadChatsAggregate = await Message.aggregate([
+      {
+        $match: {
+          conversationId: { $in: convIds },
+          sender: { $ne: userId },
+          readBy: { $ne: userId },
+        },
+      },
+      {
+        $group: {
+          _id: '$conversationId',
+        },
+      },
+      {
+        $count: 'unreadChatsCount',
+      },
+    ]);
+
+    const unreadChatsCount =
+      unreadChatsAggregate.length > 0 ? unreadChatsAggregate[0].unreadChatsCount : 0;
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        unreadChatsCount,
+        totalUnreadMessages,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Mark all messages in a conversation as read by current user
+ * @route   PATCH /api/conversations/:id/read
+ * @access  Private
+ */
+export const markConversationAsRead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid conversation ID format',
+      });
+    }
+
+    await Message.updateMany(
+      {
+        conversationId: id,
+        sender: { $ne: userId },
+        readBy: { $ne: userId },
+      },
+      {
+        $addToSet: { readBy: userId },
+      }
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`conversation_${id}`).emit('messages_read', {
+        conversationId: id,
+        userId: userId.toString(),
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Conversation marked as read',
+    });
+  } catch (error) {
+    next(error);
+  }
+};

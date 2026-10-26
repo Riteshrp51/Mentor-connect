@@ -173,6 +173,11 @@ const MessagesPage = () => {
       const res = await api.get(`/api/conversations/${convId}/messages`);
       if (res.data && res.data.status === 'success') {
         setMessages(res.data.data || []);
+        // Reset unread count for this conversation in state
+        setConversations((prev) =>
+          prev.map((c) => (c._id === convId ? { ...c, unreadCount: 0 } : c))
+        );
+        window.dispatchEvent(new Event('unread_counts_updated'));
       }
     } catch (err) {
       console.error('Failed to fetch messages:', err);
@@ -221,24 +226,44 @@ const MessagesPage = () => {
           return [...prev, newMsg];
         });
 
+        // Mark as read on server since active conversation is open
+        api.patch(`/api/conversations/${convId}/read`).catch(() => {});
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === convId
+              ? {
+                  ...c,
+                  unreadCount: 0,
+                  lastMessage: {
+                    text: newMsg.text || (newMsg.attachments?.length > 0 ? '📎 Attachment' : ''),
+                    sender: newMsg.sender?._id || newMsg.sender,
+                    sentAt: newMsg.createdAt,
+                  },
+                }
+              : c
+          )
+        );
+        window.dispatchEvent(new Event('unread_counts_updated'));
         setTimeout(() => scrollToBottom(true), 30);
+      } else {
+        // Increment unread count for the other conversation
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === newMsg.conversationId
+              ? {
+                  ...c,
+                  unreadCount: (c.unreadCount || 0) + 1,
+                  lastMessage: {
+                    text: newMsg.text || (newMsg.attachments?.length > 0 ? '📎 Attachment' : ''),
+                    sender: newMsg.sender?._id || newMsg.sender,
+                    sentAt: newMsg.createdAt,
+                  },
+                }
+              : c
+          )
+        );
+        window.dispatchEvent(new Event('unread_counts_updated'));
       }
-
-      // Update sidebar conversation item with latest message
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === newMsg.conversationId
-            ? {
-                ...c,
-                lastMessage: {
-                  text: newMsg.text || (newMsg.attachments?.length > 0 ? '📎 Attachment' : ''),
-                  sender: newMsg.sender?._id || newMsg.sender,
-                  sentAt: newMsg.createdAt,
-                },
-              }
-            : c
-        )
-      );
     };
 
     const handleUserTyping = ({ conversationId, user: typingUser }) => {
@@ -525,7 +550,6 @@ const MessagesPage = () => {
             <div className="sidebar-title-row">
               <h2 className="sidebar-title">
                 Chats
-                <span className="sidebar-count-badge">{conversations.length}</span>
               </h2>
               <button
                 type="button"
@@ -588,6 +612,11 @@ const MessagesPage = () => {
                     onClick={() => {
                       setActiveConversation(conv);
                       setSearchParams({ conversationId: conv._id });
+                      setConversations((prev) =>
+                        prev.map((c) => (c._id === conv._id ? { ...c, unreadCount: 0 } : c))
+                      );
+                      api.patch(`/api/conversations/${conv._id}/read`).catch(() => {});
+                      window.dispatchEvent(new Event('unread_counts_updated'));
                     }}
                   >
                     <div className="conversation-avatar-box">
@@ -687,6 +716,20 @@ const MessagesPage = () => {
                 >
                   <Calendar size={14} />
                   <span>Session</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm header-action-btn-pill"
+                  onClick={() => {
+                    const roomCode = `mc-${activeConversation._id.slice(-6)}`;
+                    navigate(user?.role === 'student' ? `/student/sessions?room=${roomCode}` : `/mentor/sessions?room=${roomCode}`);
+                  }}
+                  title="Start instant 1:1 video call"
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <VideoIcon size={14} />
+                  <span>Video Call</span>
                 </button>
 
                 <button
@@ -820,7 +863,60 @@ const MessagesPage = () => {
                           )}
 
                           {/* Message Text */}
-                          {msg.text && <span className="message-text">{msg.text}</span>}
+                          {msg.text && (
+                            <span className="message-text" style={{ whiteSpace: 'pre-wrap' }}>
+                              {msg.text}
+                            </span>
+                          )}
+
+                          {/* Interactive Video Call Join Card if message contains Room Code */}
+                          {(() => {
+                            const roomMatch = msg.text?.match(/mc-\d{4,6}/i);
+                            if (roomMatch) {
+                              const extractedCode = roomMatch[0].toLowerCase();
+                              const rolePath = user?.role === 'student' ? 'student' : 'mentor';
+                              return (
+                                <div
+                                  style={{
+                                    marginTop: '8px',
+                                    padding: '8px 10px',
+                                    backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(79, 70, 229, 0.3)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '8px',
+                                    flexWrap: 'wrap'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <VideoIcon size={14} style={{ color: 'var(--primary)' }} />
+                                    <span style={{ fontSize: '12px', fontWeight: '700' }}>
+                                      Room: <code style={{ color: 'var(--primary)' }}>{extractedCode}</code>
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(`/${rolePath}/sessions?room=${extractedCode}`)}
+                                    className="btn btn-primary btn-sm"
+                                    style={{
+                                      fontSize: '11px',
+                                      padding: '4px 10px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <VideoIcon size={12} />
+                                    Join Video Call
+                                  </button>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
 
                           <span className="message-meta">
                             <span className="message-time">{formatTime(msg.createdAt)}</span>

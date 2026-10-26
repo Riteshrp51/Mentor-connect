@@ -20,17 +20,22 @@ export const getMentorList = async (req, res, next) => {
 
     if (search && search.trim() !== '') {
       const trimmedSearch = search.trim();
+      const escapedSearch = trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
 
       // Find users whose name matches the search term (case-insensitive regex)
       const matchingUsers = await User.find({
-        name: { $regex: trimmedSearch, $options: 'i' },
+        name: searchRegex,
         role: 'mentor',
       }).select('_id');
       const userIds = matchingUsers.map((u) => u._id);
 
       filter.$or = [
-        { $text: { $search: trimmedSearch } },
         { userId: { $in: userIds } },
+        { domain: searchRegex },
+        { company: searchRegex },
+        { expertise: searchRegex },
+        { bio: searchRegex },
       ];
     }
 
@@ -77,7 +82,7 @@ export const getMentorList = async (req, res, next) => {
     const skip = (pageNumber - 1) * limitNumber;
 
     const mentorsQuery = MentorProfile.find(filter)
-      .populate('userId', 'name profileImage')
+      .populate('userId', 'name profileImage headline company bio skills')
       .sort(sort || '-rating.average')
       .skip(skip)
       .limit(limitNumber);
@@ -95,14 +100,16 @@ export const getMentorList = async (req, res, next) => {
         mentors: mentors.map((mentor) => ({
           _id: mentor._id,
           userId: mentor.userId,
-          bio: mentor.bio,
-          expertise: mentor.expertise,
-          mentorshipAreas: mentor.mentorshipAreas,
-          domain: mentor.domain,
-          company: mentor.company,
-          experienceYears: mentor.experienceYears,
+          bio: mentor.bio || mentor.userId?.bio || '',
+          expertise: mentor.expertise?.length ? mentor.expertise : (mentor.userId?.skills || []),
+          mentorshipAreas: mentor.mentorshipAreas || [],
+          serviceCategories: mentor.serviceCategories || [],
+          domain: mentor.domain || mentor.userId?.headline || 'General Mentorship',
+          company: mentor.company || mentor.userId?.company || 'Industry Professional',
+          experienceYears: mentor.experienceYears || 0,
+          experienceLevel: mentor.experienceLevel || 'Senior Engineer',
           profileCompletion: mentor.profileCompletion,
-          location: mentor.location,
+          location: mentor.location || 'Remote',
           rating: mentor.rating,
           isAvailable: mentor.isAvailable,
           matchPercentage: 0,

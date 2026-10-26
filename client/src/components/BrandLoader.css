@@ -1,0 +1,216 @@
+/* MentorConnect Interactive Brand Loader Styles */
+
+@keyframes mcOrbitSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mcOrbitSpinRev {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes mcPulseGlow {
+  0%, 100% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 15px rgba(0, 180, 216, 0.6));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 28px rgba(0, 245, 212, 0.9));
+  }
+}
+
+@keyframes mcFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes mcDotBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+.mc-orbit-spin {
+  animation: mcOrbitSpin 6s linear infinite;
+  transform-origin: 150px 150px;
+}
+
+.mc-orbit-spin-reverse {
+  animation: mcOrbitSpinRev 8s linear infinite;
+  transform-origin: 150px 150px;
+}
+
+.mc-float {
+  animation: mcFloat 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.mc-dot-bounce {
+  animation: mcDotBounce 1.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.mc-pulse-glow {
+  animation: mcPulseGlow 2s ease-in-out infinite;
+}
+
+.mc-glow-teal {
+  filter: drop-shadow(0px 0px 10px rgba(0, 245, 212, 0.7));
+}
+
+.mc-glow-cyan {
+  filter: drop-shadow(0px 0px 8px rgba(0, 180, 216, 0.6));
+}
+
+/* Loader Container Overlay */
+.brand-loader-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  background-color: #060b14; /* Deep rich navy/black */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  user-select: none;
+}
+
+.brand-loader-inline {
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+/* Background Ambient Glow & Grid Pattern */
+.brand-loader-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(30, 41, 59, 0.75) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.brand-loader-ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0, 180, 216, 0.22) 0%, rgba(0, 132, 255, 0.08) 50%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+/* Central Content */
+.brand-loader-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+}
+
+.brand-loader-svg-box {
+  width: 250px;
+  height: 250px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .brand-loader-svg-box {
+    width: 285px;
+    height: 285px;
+  }
+}
+
+.brand-loader-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Brand Typography */
+.brand-loader-typography {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.brand-loader-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .brand-loader-title {
+    font-size: 32px;
+  }
+}
+
+.brand-loader-accent {
+  background: linear-gradient(135deg, #0084FF 0%, #00B4D8 50%, #00F5D4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.brand-loader-tagline {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: #94A3B8;
+  text-transform: uppercase;
+  margin: 6px 0 0 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.brand-loader-dot {
+  color: #00F5D4;
+  margin: 0 4px;
+  font-weight: 900;
+}

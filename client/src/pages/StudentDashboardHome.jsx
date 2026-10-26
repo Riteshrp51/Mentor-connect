@@ -1,7 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import socket from '../socket';
+import { getSessionTiming } from '../utils/sessionTiming';
 import {
   FileText,
   Calendar,
@@ -11,14 +13,17 @@ import {
   Clock,
   AlertCircle,
   GraduationCap,
-  ChevronLeft,
-  ChevronRight,
   Briefcase,
   Star,
   UserCheck,
   Sparkles,
   Edit3,
   HelpCircle,
+  Video,
+  Copy,
+  ArrowRight,
+  Eye,
+  Plus,
 } from 'lucide-react';
 import RequestMentorshipModal from '../components/RequestMentorshipModal';
 import MentorProfileModal from '../components/MentorProfileModal';
@@ -73,6 +78,8 @@ const StudentDashboardHome = () => {
   });
   const [recommendedMentors, setRecommendedMentors] = useState(sampleFallbackMentors);
   const [sentRequests, setSentRequests] = useState([]);
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [copiedCode, setCopiedCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMentorForRequest, setSelectedMentorForRequest] = useState(null);
@@ -85,7 +92,6 @@ const StudentDashboardHome = () => {
     );
   });
   const [toastMessage, setToastMessage] = useState('');
-  const carouselRef = useRef(null);
 
   useEffect(() => {
     if (user?.isProfileCompleted || localStorage.getItem(`profile_completed_${user?._id || user?.id}`) === 'true') {
@@ -105,6 +111,18 @@ const StudentDashboardHome = () => {
       setError('Failed to fetch stats. Please refresh the page.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUpcomingSessions = async () => {
+    try {
+      const res = await api.get('/api/sessions');
+      if (res.data && res.data.status === 'success') {
+        const all = res.data.data || [];
+        setUpcomingSessions(all);
+      }
+    } catch (err) {
+      console.error('Error fetching student sessions in dashboard:', err);
     }
   };
 
@@ -129,6 +147,15 @@ const StudentDashboardHome = () => {
     } catch (err) {
       console.error('Error fetching sent requests in student dashboard:', err);
     }
+  };
+
+  const handleCopyRoomCode = (code, e) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setToastMessage(`Room Code "${code}" copied to clipboard!`);
+    setTimeout(() => setCopiedCode(''), 2500);
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const getMentorConnectionStatus = (mentor) => {
@@ -158,19 +185,32 @@ const StudentDashboardHome = () => {
 
   useEffect(() => {
     fetchSummary();
+    fetchUpcomingSessions();
     fetchRecommendedMentors();
     fetchSentRequests();
-  }, []);
 
-  const handleScroll = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      carouselRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth',
-      });
+    const handleUpdate = () => {
+      fetchSummary();
+      fetchUpcomingSessions();
+    };
+
+    window.addEventListener('unread_counts_updated', handleUpdate);
+    window.addEventListener('session_created', handleUpdate);
+
+    if (socket) {
+      socket.on('session_created', handleUpdate);
+      socket.on('session_cancelled', handleUpdate);
     }
-  };
+
+    return () => {
+      window.removeEventListener('unread_counts_updated', handleUpdate);
+      window.removeEventListener('session_created', handleUpdate);
+      if (socket) {
+        socket.off('session_created', handleUpdate);
+        socket.off('session_cancelled', handleUpdate);
+      }
+    };
+  }, []);
 
   return (
     <div>
@@ -233,7 +273,7 @@ const StudentDashboardHome = () => {
             <Calendar size={22} />
           </div>
           <div className="stat-details">
-            <span className="stat-value">{loading ? '...' : (stats.sessionsCount || 2)}</span>
+            <span className="stat-value">{loading ? '...' : (stats.sessionsCount !== undefined ? stats.sessionsCount : upcomingSessions.length)}</span>
             <span className="stat-label">Upcoming Sessions</span>
           </div>
         </div>
@@ -256,94 +296,354 @@ const StudentDashboardHome = () => {
 
       {/* Main Grid: Expands to full-width when profile is completed */}
       <div className={`dashboard-grid ${profileCompleted ? 'full-width' : ''}`}>
-        {/* Left Side: Mentors Carousel */}
+        {/* Left Side: Upcoming Sessions & Mentors Carousel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Upcoming Mentorship Sessions Widget (Shown before Recommended Mentors) */}
           <div className="dashboard-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 className="dashboard-card-title" style={{ margin: 0 }}>
-                <GraduationCap size={20} style={{ color: 'var(--primary)' }} />
-                Recommended Mentors for You
+                <Calendar size={20} style={{ color: 'var(--primary)' }} />
+                Upcoming Mentorship Sessions {upcomingSessions.filter((s) => !getSessionTiming(s).isExpired && s.status !== 'cancelled').length > 0 && `(${upcomingSessions.filter((s) => !getSessionTiming(s).isExpired && s.status !== 'cancelled').length})`}
               </h3>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  className="carousel-btn"
-                  onClick={() => handleScroll('left')}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  className="carousel-btn"
-                  onClick={() => handleScroll('right')}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => navigate('/student/sessions')}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <span>View all sessions</span>
+                <ArrowRight size={14} />
+              </button>
             </div>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-              Based on your career interests and skill gaps, we suggest reaching out to these highly-rated mentors.
-            </p>
+            {(() => {
+              const activeSessions = upcomingSessions.map((s) => ({
+                session: s,
+                timing: getSessionTiming(s),
+              })).filter(({ session, timing }) => {
+                if (session.status === 'cancelled') return false;
+                if (!timing.isExpired) return true;
+                // If expired/completed, keep today's sessions visible as static cards
+                const todayStr = new Date().toDateString();
+                return timing.startTime.toDateString() === todayStr;
+              });
 
-            <div className="carousel-container">
-              <div className="carousel-track" ref={carouselRef}>
-                {recommendedMentors.map((mentor) => {
-                  const mentorName = mentor.userId?.name || mentor.name || 'Mentor';
-                  const mentorAvatar =
-                    mentor.userId?.profileImage ||
-                    mentor.avatar ||
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-                  const mentorCompany = mentor.company || mentor.title || 'Company';
-                  const mentorDomain = mentor.domain || mentor.title || 'General Mentorship';
-                  const mentorRating = mentor.rating?.average || mentor.rating || 5.0;
-                  const mentorReviews = mentor.rating?.count || mentor.reviews || 0;
-                  const skills = mentor.expertise || mentor.skills || [];
-                  const connectionStatus = getMentorConnectionStatus(mentor);
+              if (activeSessions.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '28px 16px', color: 'var(--text-muted)' }}>
+                    <Calendar size={36} style={{ margin: '0 auto 10px auto', opacity: 0.4 }} />
+                    <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      No Upcoming Sessions
+                    </h4>
+                    <p style={{ fontSize: '13px', margin: '0 0 14px 0' }}>
+                      You have no mentorship sessions scheduled right now. Schedule a 1:1 meeting with your mentors below!
+                    </p>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => navigate('/student/sessions')}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Plus size={14} />
+                      Schedule a Session
+                    </button>
+                  </div>
+                );
+              }
 
-                  return (
-                    <div className="carousel-card" key={mentor._id || mentor.id}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {activeSessions.slice(0, 4).map(({ session, timing }) => {
+                    const mentor = session.mentorId;
+                    const mentorName = mentor?.name || 'Mentor';
+                    const mentorAvatar =
+                      mentor?.profileImage ||
+                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
+                    const mentorRole = session.mentorCompany ? `Mentor at ${session.mentorCompany}` : (mentor?.headline || 'Expert Mentor');
+
+                    return (
+                      <div
+                        key={session._id || session.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '16px 18px',
+                          borderRadius: '12px',
+                          backgroundColor: timing.isExpired ? 'rgba(255, 255, 255, 0.02)' : 'var(--bg-secondary)',
+                          border: timing.isLive
+                            ? '1px solid rgba(239, 68, 68, 0.4)'
+                            : timing.isExpired
+                            ? '1px solid var(--border-light)'
+                            : '1px solid var(--border-light)',
+                          boxShadow: timing.isLive ? '0 0 12px rgba(239, 68, 68, 0.15)' : 'none',
+                          opacity: timing.isExpired ? 0.85 : 1,
+                          gap: '16px',
+                          flexWrap: 'wrap',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: '220px' }}>
+                          <img
+                            src={mentorAvatar}
+                            alt={mentorName}
+                            style={{
+                              width: '46px',
+                              height: '46px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: timing.isLive ? '2px solid #ef4444' : '2px solid var(--primary)',
+                            }}
+                          />
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                {session.topic}
+                              </h4>
+                              {timing.isLive && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    color: '#ef4444',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                  }}
+                                >
+                                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }}></span>
+                                  Live Now ({timing.remainingMinutes}m left)
+                                </span>
+                              )}
+                              {timing.isExpired && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    color: '#10b981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                  }}
+                                >
+                                  <CheckCircle2 size={11} />
+                                  Completed ({session.durationMinutes}m)
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                              With <strong>{mentorName}</strong> ({mentorRole})
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Clock size={13} style={{ color: timing.isLive ? '#ef4444' : 'var(--primary)' }} />
+                                {timing.formattedDate} • {timing.formattedTime} - {timing.formattedEndTime}
+                              </span>
+                              <span>•</span>
+                              <span>{session.durationMinutes} mins</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          {/* Room Code Badge */}
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '5px 10px',
+                              borderRadius: '8px',
+                              backgroundColor: 'var(--bg-card)',
+                              border: '1px solid var(--border-light)',
+                              fontFamily: 'monospace',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              color: 'var(--primary)',
+                            }}
+                            title="Room Code"
+                          >
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Room:</span>
+                            <span>{session.roomCode}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleCopyRoomCode(session.roomCode, e)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--text-muted)',
+                                padding: '2px',
+                                display: 'flex',
+                              }}
+                              title="Copy Room Code"
+                            >
+                              {copiedCode === session.roomCode ? (
+                                <CheckCircle2 size={13} style={{ color: '#10b981' }} />
+                              ) : (
+                                <Copy size={13} />
+                              )}
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => navigate('/student/sessions')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                          >
+                            <Eye size={13} />
+                            Details
+                          </button>
+
+                          {timing.isExpired ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: 'var(--text-muted)',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              }}
+                            >
+                              Session Ended
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => navigate(`/student/sessions?room=${session.roomCode}`)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                backgroundColor: timing.isLive ? '#ef4444' : undefined,
+                                borderColor: timing.isLive ? '#ef4444' : undefined,
+                              }}
+                            >
+                              <Video size={13} />
+                              {timing.isLive ? 'Join Live Call' : 'Join Session'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Recommended Mentors (3 in a Row, matching Browse Mentors) */}
+          <div className="dashboard-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 className="dashboard-card-title" style={{ margin: 0 }}>
+                  <GraduationCap size={20} style={{ color: 'var(--primary)' }} />
+                  Recommended Mentors for You
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: '4px 0 0 0' }}>
+                  Based on your career interests and skill gaps, we suggest reaching out to these highly-rated mentors.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => navigate('/student/mentors')}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--primary)' }}
+              >
+                <span>Browse all mentors</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+
+            <div className="mentor-directory-grid">
+              {recommendedMentors.map((mentor) => {
+                const mentorName = mentor.userId?.name || mentor.name || 'Mentor';
+                const mentorAvatar =
+                  mentor.userId?.profileImage ||
+                  mentor.avatar ||
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+                const mentorCompany = mentor.company || mentor.title || 'Company';
+                const mentorDomain = mentor.domain || mentor.title || 'General Mentorship';
+                const mentorRating = mentor.rating?.average || mentor.rating || 5.0;
+                const mentorReviews = mentor.rating?.count || mentor.reviews || 0;
+                const skills = mentor.expertise || mentor.skills || [];
+                const connectionStatus = getMentorConnectionStatus(mentor);
+
+                return (
+                  <div
+                    key={mentor._id || mentor.id}
+                    className="dashboard-card"
+                    style={{
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      border: '1px solid var(--border-light)',
+                      borderRadius: 'var(--radius-lg)',
+                      margin: 0,
+                      backgroundColor: 'var(--surface-muted, #1a2236)',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
                         <img
                           src={mentorAvatar}
                           alt={mentorName}
                           style={{
-                            width: '48px',
-                            height: '48px',
+                            width: '50px',
+                            height: '50px',
                             borderRadius: '50%',
                             objectFit: 'cover',
                             border: '2px solid var(--primary-light)',
+                            flexShrink: 0,
                           }}
                         />
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <h4 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {mentorName}
                           </h4>
-                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            <Briefcase size={12} />
-                            {mentorCompany} • {mentorDomain}
+                          <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Briefcase size={12} style={{ flexShrink: 0 }} />
+                            <span>{mentorCompany} • {mentorDomain}</span>
                           </p>
                         </div>
                       </div>
 
-                      {connectionStatus === 'connected' && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px', marginBottom: '8px' }}>
-                          <CheckCircle2 size={11} />
-                          Already Connected
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
+                          <strong style={{ color: 'var(--text-primary)' }}>{mentorRating}</strong>
+                          <span style={{ color: 'var(--text-muted)' }}>({mentorReviews} reviews)</span>
                         </div>
-                      )}
 
-                      {connectionStatus === 'pending' && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: '2px 8px', borderRadius: '4px', marginBottom: '8px' }}>
-                          <Clock size={11} />
-                          Request Pending
-                        </div>
-                      )}
+                        {connectionStatus === 'connected' && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px' }}>
+                            <CheckCircle2 size={11} />
+                            Already Connected
+                          </div>
+                        )}
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px', fontSize: '13px' }}>
-                        <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                        <strong style={{ color: 'var(--text-primary)' }}>{mentorRating}</strong>
-                        <span style={{ color: 'var(--text-muted)' }}>({mentorReviews} reviews)</span>
+                        {connectionStatus === 'pending' && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: '2px 8px', borderRadius: '4px' }}>
+                            <Clock size={11} />
+                            Request Pending
+                          </div>
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
@@ -363,14 +663,32 @@ const StudentDashboardHome = () => {
                           </span>
                         ))}
                       </div>
+                    </div>
 
-                      {connectionStatus ? (
+                    {connectionStatus ? (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setSelectedMentorForPreview(mentor)}
+                        style={{
+                          width: '100%',
+                          fontSize: '13px',
+                          padding: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: '600',
+                        }}
+                      >
+                        View Profile
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => setSelectedMentorForPreview(mentor)}
                           style={{
-                            width: '100%',
-                            fontSize: '13px',
+                            flex: 1,
+                            fontSize: '12px',
                             padding: '8px',
                             display: 'flex',
                             alignItems: 'center',
@@ -380,46 +698,28 @@ const StudentDashboardHome = () => {
                         >
                           View Profile
                         </button>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setSelectedMentorForPreview(mentor)}
-                            style={{
-                              flex: 1,
-                              fontSize: '12px',
-                              padding: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: '600',
-                            }}
-                          >
-                            View Profile
-                          </button>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => setSelectedMentorForRequest(mentor)}
-                            style={{
-                              flex: 1.2,
-                              fontSize: '12px',
-                              padding: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '4px',
-                              fontWeight: '600',
-                            }}
-                          >
-                            <UserCheck size={13} />
-                            Connect
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => setSelectedMentorForRequest(mentor)}
+                          style={{
+                            flex: 1.2,
+                            fontSize: '12px',
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            fontWeight: '600',
+                          }}
+                        >
+                          <UserCheck size={13} />
+                          Connect
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -22,6 +22,8 @@ const notificationSchema = new Schema(
         'request_cancelled',
         'new_request',
         'session_booked',
+        'session_scheduled',
+        'new_message',
         'general',
       ],
       required: true,

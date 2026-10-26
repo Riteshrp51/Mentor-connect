@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
+import socket from '../socket';
 import {
   LayoutDashboard,
   Users,
@@ -23,24 +25,146 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [unreadChatsCount, setUnreadChatsCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   const isStudent = user?.role === 'student';
+  const [notifications, setNotifications] = useState([]);
 
-  const defaultNotifications = isStudent
-    ? [
-        { id: 1, title: 'Mentor request accepted', message: 'Dr. Sarah approved your mentorship request.', time: '2 min ago', tone: 'success', path: '/student/requests' },
-        { id: 2, title: 'New session reminder', message: 'Your mock interview is scheduled for 4:00 PM today.', time: '1 hour ago', tone: 'info', path: '/student/sessions' },
-        { id: 3, title: 'Profile details check', message: 'Complete your profile details to connect with top mentors.', time: 'Today', tone: 'neutral', path: '/student/dashboard' }
-      ]
-    : [
-        { id: 1, title: 'New student request', message: 'Sneha wants guidance on full-stack optimization.', time: '5 min ago', tone: 'info', path: '/mentor/requests' },
-        { id: 2, title: 'Session confirmation', message: 'Rohan confirmed the mentoring session for tomorrow.', time: '35 min ago', tone: 'success', path: '/mentor/sessions' },
-        { id: 3, title: 'Weekly feedback', message: 'You have 2 pending mentee feedback reviews.', time: 'Today', tone: 'warning', path: '/mentor/sessions' }
-      ];
+  // Helper to format relative time
+  const formatTimeAgo = (dateStr) => {
+    if (!dateStr) return 'Just now';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
 
-  const [notifications, setNotifications] = useState(defaultNotifications);
+  const mapNotification = (n, currentRole) => {
+    let path = `/${currentRole}/dashboard`;
+    let tone = 'purple';
+    if (n.type === 'session_scheduled' || n.type === 'session_booked') {
+      path = `/${currentRole}/sessions`;
+      tone = 'emerald';
+    } else if (n.type === 'new_message') {
+      path = `/${currentRole}/messages`;
+      tone = 'blue';
+    } else if (n.type?.startsWith('request_') || n.type === 'new_request') {
+      path = `/${currentRole}/requests`;
+      tone = 'amber';
+    }
+
+    return {
+      id: n._id,
+      title: n.title,
+      message: n.message,
+      time: formatTimeAgo(n.createdAt),
+      path,
+      tone,
+      isRead: !!n.isRead,
+      type: n.type,
+    };
+  };
+
+  // Fetch count of chats having unread messages
+  const fetchUnreadSummary = async () => {
+    try {
+      const res = await api.get('/api/conversations/unread-summary');
+      if (res.data && res.data.status === 'success') {
+        setUnreadChatsCount(res.data.data.unreadChatsCount || 0);
+      }
+    } catch (err) {
+      // Quiet fail
+    }
+  };
+
+  // Fetch real notifications from database
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/api/notifications');
+      if (res.data && res.data.status === 'success') {
+        const raw = res.data.data.notifications || [];
+        setNotifications(raw.map((n) => mapNotification(n, user?.role || 'student')));
+      }
+    } catch (err) {
+      // Quiet fail
+    }
+  };
+
+  const handleClearAllNotifications = async () => {
+    try {
+      await api.delete('/api/notifications');
+      setNotifications([]);
+    } catch (err) {
+      setNotifications([]);
+    }
+  };
+
+  const handleMarkNotificationsRead = async () => {
+    try {
+      await api.patch('/api/notifications/mark-read');
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      // Quiet fail
+    }
+  };
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    fetchUnreadSummary();
+    fetchNotifications();
+
+    const handleUpdate = () => {
+      fetchUnreadSummary();
+    };
+
+    window.addEventListener('unread_counts_updated', handleUpdate);
+
+    if (socket) {
+      // Join user-specific socket room for live notifications and session updates
+      socket.emit('join_user', user._id);
+
+      socket.on('receive_message', handleUpdate);
+      socket.on('conversation_updated', handleUpdate);
+      socket.on('messages_read', handleUpdate);
+
+      // Real-time live notification received
+      socket.on('new_notification', (newNotif) => {
+        if (!newNotif) return;
+        const mapped = mapNotification(newNotif, user.role);
+        setNotifications((prev) => {
+          // Avoid duplicate
+          const exists = prev.some((item) => item.id === mapped.id);
+          if (exists) return prev;
+          return [mapped, ...prev];
+        });
+      });
+
+      // Relay session_created event to other components
+      socket.on('session_created', (session) => {
+        window.dispatchEvent(new CustomEvent('session_created', { detail: session }));
+      });
+    }
+
+    return () => {
+      window.removeEventListener('unread_counts_updated', handleUpdate);
+      if (socket) {
+        socket.emit('leave_user', user._id);
+        socket.off('receive_message', handleUpdate);
+        socket.off('conversation_updated', handleUpdate);
+        socket.off('messages_read', handleUpdate);
+        socket.off('new_notification');
+        socket.off('session_created');
+      }
+    };
+  }, [user?._id]);
 
   const handleLogout = async () => {
     await logout();
@@ -85,25 +209,41 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
       <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
           <NavLink to="/" className="sidebar-logo" onClick={() => setIsMobileOpen(false)}>
-            <div className="sidebar-logo-icon">
-              <GraduationCap size={20} strokeWidth={2.5} />
-            </div>
+            <img
+              src="/logo.png"
+              alt="MentorConnect"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
             <span>MentorConnect</span>
           </NavLink>
         </div>
 
         <nav className="sidebar-nav">
-          {navLinks.map((link) => (
-            <NavLink
-              key={link.path}
-              to={link.path}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              onClick={() => setIsMobileOpen(false)}
-            >
-              {link.icon}
-              <span>{link.name}</span>
-            </NavLink>
-          ))}
+          {navLinks.map((link) => {
+            const isMessagesLink = link.name === 'Messages';
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                onClick={() => setIsMobileOpen(false)}
+              >
+                {link.icon}
+                <span>{link.name}</span>
+                {isMessagesLink && unreadChatsCount > 0 && (
+                  <span className="sidebar-unread-badge" title={`${unreadChatsCount} unread chats`}>
+                    {unreadChatsCount}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
@@ -166,44 +306,54 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
 
-            {/* Notification Bell */}
-            <div className="notification-wrapper">
-              <button
-                className="notification-bell-btn"
-                aria-label="Notifications"
-                title="Notifications"
-                type="button"
-                onClick={() => setShowNotifications((prev) => !prev)}
-              >
-                <Bell size={18} />
-                <span className="notification-badge">{notifications.length}</span>
-              </button>
+              {/* Notification Bell */}
+              <div className="notification-wrapper">
+                <button
+                  className="notification-bell-btn"
+                  aria-label="Notifications"
+                  title="Notifications"
+                  type="button"
+                  onClick={() => {
+                    const willOpen = !showNotifications;
+                    setShowNotifications(willOpen);
+                    if (willOpen) {
+                      handleMarkNotificationsRead();
+                    }
+                  }}
+                >
+                  <Bell size={18} />
+                  {notifications.filter((n) => !n.isRead).length > 0 && (
+                    <span className="notification-badge">
+                      {notifications.filter((n) => !n.isRead).length}
+                    </span>
+                  )}
+                </button>
 
-              {showNotifications && (
-                <div className="notification-dropdown" role="menu" aria-label="Notifications panel">
-                  <div className="notification-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>Notifications</span>
-                      <span className="notification-panel-count">{notifications.length}</span>
+                {showNotifications && (
+                  <div className="notification-dropdown" role="menu" aria-label="Notifications panel">
+                    <div className="notification-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>Notifications</span>
+                        <span className="notification-panel-count">{notifications.length}</span>
+                      </div>
+                      {notifications.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAllNotifications}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--primary)',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            padding: '2px 6px'
+                          }}
+                        >
+                          Clear All
+                        </button>
+                      )}
                     </div>
-                    {notifications.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setNotifications([])}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary)',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          padding: '2px 6px'
-                        }}
-                      >
-                        Clear All
-                      </button>
-                    )}
-                  </div>
 
                   <div className="notification-list">
                     {notifications.length === 0 ? (

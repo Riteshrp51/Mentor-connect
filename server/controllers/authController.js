@@ -99,6 +99,29 @@ export const register = async (req, res, next) => {
       role,
     });
 
+    // 8. If role is mentor, automatically initialize MentorProfile so the mentor is immediately visible and searchable on student side
+    if (role === 'mentor') {
+      try {
+        await MentorProfile.create({
+          userId: user._id,
+          bio: 'Experienced engineering and tech mentor available for guidance, technical doubt solving, and mock interviews.',
+          company: 'Tech Industry Professional',
+          domain: 'Software Engineering & Mentorship',
+          expertise: ['Software Development', 'Career Guidance', 'Mock Interviews'],
+          mentorshipAreas: ['Career Counseling', 'Mock Interviews'],
+          serviceCategories: ['Career Counseling', 'Mock Interviews'],
+          experienceLevel: 'Senior Software Engineer',
+          experienceYears: 4,
+          location: 'Remote',
+          profileCompletion: 75,
+          rating: { average: 5.0, count: 0 },
+          isAvailable: true,
+        });
+      } catch (profileErr) {
+        console.error('Initial MentorProfile creation notice:', profileErr.message);
+      }
+    }
+
     sendTokenResponse(user, 201, res);
   } catch (err) {
     next(err);

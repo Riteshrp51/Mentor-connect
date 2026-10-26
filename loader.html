@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentorConnect - Interactive Brand Loader & Preloader Showcase</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#0B2545',
+                            darkBlue: '#13315C',
+                            blue: '#0084FF',
+                            cyan: '#00B4D8',
+                            teal: '#00F5D4',
+                            mint: '#10B981',
+                            accent: '#38BDF8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'orbit-spin': 'orbitSpin 6s linear infinite',
+                        'orbit-spin-reverse': 'orbitSpinRev 8s linear infinite',
+                        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'dot-bounce': 'dotBounce 1.4s ease-in-out infinite',
+                        'dash': 'dash 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        orbitSpin: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        },
+                        orbitSpinRev: {
+                            '0%': { transform: 'rotate(360deg)' },
+                            '100%': { transform: 'rotate(0deg)' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 0.8, filter: 'drop-shadow(0 0 15px rgba(0, 180, 216, 0.6))' },
+                            '50%': { opacity: 1, filter: 'drop-shadow(0 0 28px rgba(0, 245, 212, 0.9))' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        },
+                        dotBounce: {
+                            '0%, 80%, 100%': { transform: 'scale(0.6)', opacity: 0.4 },
+                            '40%': { transform: 'scale(1.2)', opacity: 1 }
+                        },
+                        dash: {
+                            '0%': { strokeDashoffset: '280' },
+                            '50%': { strokeDashoffset: '70' },
+                            '100%': { strokeDashoffset: '280' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Custom SVG Glow Effects */
+        .glow-cyan {
+            filter: drop-shadow(0px 0px 8px rgba(0, 180, 216, 0.5));
+        }
+
+        .glow-teal {
+            filter: drop-shadow(0px 0px 10px rgba(0, 245, 212, 0.6));
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #0084FF 0%, #00B4D8 50%, #00F5D4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0084FF;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-blue selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo Header -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-teal p-0.5 shadow-lg shadow-brand-blue/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <svg class="w-6 h-6 text-brand-teal" viewBox="0 0 100 100" fill="none">
+                            <path d="M30,65 C30,45 45,35 60,35 C75,35 80,45 80,65" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+                            <circle cx="55" cy="25" r="12" fill="currentColor"/>
+                            <path d="M20,75 L40,75 C45,75 50,70 50,65" stroke="#0084FF" stroke-width="7" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight text-white">Mentor<span class="text-brand-cyan">Connect</span></span>
+                    <span class="text-xs bg-brand-blue/10 text-brand-cyan border border-brand-blue/30 px-2 py-0.5 rounded-full ml-2 font-medium">Loader Studio</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <button id="fullscreen-trigger-btn" class="px-3 py-1.5 text-xs sm:text-sm font-medium bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-blue-600 hover:to-cyan-500 text-white rounded-lg transition-all shadow-md shadow-brand-blue/20 flex items-center gap-1.5 active:scale-95">
+                    <i data-lucide="maximize" class="w-4 h-4"></i>
+                    <span>Preview Fullscreen Overlay</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Interactive Animated Loader Canvas (7 Cols) -->
+        <section class="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col justify-between min-h-[560px] relative overflow-hidden backdrop-blur-sm">
+            <!-- Canvas Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800/80 z-10">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                    <span class="ml-2 text-xs font-mono text-slate-400">Live SVG Canvas — <span id="current-mode-label" class="text-brand-cyan font-semibold">Full Brand Logo Animation</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="play-pause-btn" title="Toggle Animation" class="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                        <i data-lucide="pause" class="w-4 h-4"></i>
+                    </button>
+                    <button id="reset-btn" title="Reset Progress" class="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Background Grid Pattern -->
+            <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none"></div>
+
+            <!-- Ambient Glow Effect behind SVG -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-brand-blue/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- CENTER LOADER CONTAINER -->
+            <div class="my-auto py-10 flex flex-col items-center justify-center relative z-10">
+                
+                <!-- SVG Animated Logo Canvas Component -->
+                <div id="loader-display-area" class="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center">
+                    
+                    <!-- SVG VECTOR LOGO COMPONENT -->
+                    <svg id="mentor-connect-svg" class="w-full h-full overflow-visible" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- Linear & Radial Gradients -->
+                            <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0084FF" />
+                                <stop offset="50%" stop-color="#00B4D8" />
+                                <stop offset="100%" stop-color="#00F5D4" />
+                            </linearGradient>
+
+                            <linearGradient id="studentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0062E6" />
+                                <stop offset="100%" stop-color="#00B4D8" />
+                            </linearGradient>
+
+                            <linearGradient id="mentorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0B2545" />
+                                <stop offset="100%" stop-color="#13315C" />
+                            </linearGradient>
+
+                            <linearGradient id="chatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#10B981" />
+                                <stop offset="100%" stop-color="#00F5D4" />
+                            </linearGradient>
+
+                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+
+                        <!-- Outer Swirling Orbit Ring 1 (Clockwise) -->
+                        <path id="orbit-ring-1" d="M 150, 25 A 125,125 0 1,1 149.9,25" 
+                              stroke="url(#orbitGrad)" 
+                              stroke-width="5" 
+                              stroke-linecap="round"
+                              stroke-dasharray="180 120"
+                              class="animate-orbit-spin origin-center opacity-90 glow-teal" fill="none" />
+
+                        <!-- Outer Counter-Swirling Orbit Ring 2 (Dashed Reverse) -->
+                        <path id="orbit-ring-2" d="M 150, 38 A 112,112 0 1,0 149.9,38" 
+                              stroke="#0084FF" 
+                              stroke-width="3" 
+                              stroke-linecap="round"
+                              stroke-dasharray="40 90"
+                              class="animate-orbit-spin-reverse origin-center opacity-60" fill="none" />
+
+                        <!-- Orbiting Particle Node -->
+                        <g class="animate-orbit-spin origin-center">
+                            <circle cx="150" cy="25" r="7" fill="#00F5D4" class="glow-teal" />
+                            <circle cx="150" cy="25" r="12" fill="#00F5D4" opacity="0.3" />
+                        </g>
+
+                        <!-- MAIN EMBLEM GROUP (Float Effect) -->
+                        <g class="animate-float origin-center">
+                            
+                            <!-- 1. CHAT BUBBLE WITH TYPING INDICATOR (TOP CENTER) -->
+                            <g transform="translate(118, 52)">
+                                <!-- Chat Bubble Shape -->
+                                <path d="M 12 0 C 28 0 38 9 38 22 C 38 32 30 38 18 39 C 14 44 6 47 2 48 C 5 43 7 39 6 36 C 2 32 0 27 0 22 C 0 9 12 0 22 0 Z" 
+                                      fill="url(#chatGrad)" class="glow-teal" />
+                                
+                                <!-- Animated Typing Dots inside Chat Bubble -->
+                                <circle cx="13" cy="20" r="2.8" fill="#0B2545" class="animate-dot-bounce" style="animation-delay: 0s" />
+                                <circle cx="21" cy="20" r="2.8" fill="#0B2545" class="animate-dot-bounce" style="animation-delay: 0.2s" />
+                                <circle cx="29" cy="20" r="2.8" fill="#0B2545" class="animate-dot-bounce" style="animation-delay: 0.4s" />
+                            </g>
+
+                            <!-- 2. STUDENT FIGURE (LEFT SIDE) -->
+                            <g transform="translate(68, 92)">
+                                <!-- Student Head -->
+                                <circle cx="42" cy="28" r="22" fill="url(#studentGrad)" />
+                                
+                                <!-- Student Backpack -->
+                                <path d="M 12,50 C 6,50 2,58 2,75 C 2,90 8,102 16,102 C 22,102 24,92 24,75 C 24,58 18,50 12,50 Z" 
+                                      fill="#0052CC" />
+                                
+                                <!-- Student Body & Arm Leaning Forward towards laptop -->
+                                <path d="M 24,65 C 24,52 38,48 55,48 C 65,48 72,55 78,65 L 90,82 C 94,87 88,94 80,92 L 56,86 C 45,83 24,80 24,65 Z" 
+                                      fill="url(#studentGrad)" />
+                            </g>
+
+                            <!-- 3. MENTOR FIGURE WITH GRADUATION CAP (RIGHT SIDE) -->
+                            <g transform="translate(150, 72)">
+                                <!-- Mentor Head -->
+                                <circle cx="50" cy="46" r="24" fill="#13315C" />
+                                
+                                <!-- Graduation Cap (Mortarboard) -->
+                                <path d="M 12,30 L 50,12 L 88,30 L 50,44 Z" fill="#0B2545" stroke="#00B4D8" stroke-width="2" />
+                                <path d="M 28,37 L 28,52 C 28,58 72,58 72,52 L 72,37" fill="#0B2545" />
+                                <!-- Cap Tassel -->
+                                <path d="M 82,31 L 86,48 L 84,52" stroke="#00F5D4" stroke-width="2.5" stroke-linecap="round" />
+                                <circle cx="84" cy="53" r="2" fill="#00F5D4" />
+
+                                <!-- Mentor Body Collar & Shoulders -->
+                                <path d="M 20,86 C 20,68 36,62 50,62 C 64,62 80,68 80,86 L 80,105 L 20,105 Z" fill="#13315C" />
+                                <!-- Suit V-Neck Collar Detail -->
+                                <path d="M 40,62 L 50,82 L 60,62 Z" fill="#0084FF" opacity="0.6" />
+                            </g>
+
+                            <!-- 4. LAPTOP IN THE MIDDLE (SHARED COLLABORATION SYMBOL) -->
+                            <g transform="translate(132, 160)">
+                                <!-- Laptop Screen -->
+                                <path d="M 6,0 L 52,0 C 56,0 58,3 58,7 L 54,32 L 4,32 L 0,7 C 0,3 2,0 6,0 Z" 
+                                      fill="#0B2545" stroke="#00B4D8" stroke-width="2" />
+                                <!-- Laptop Display Screen Glow -->
+                                <rect x="6" y="4" width="46" height="23" rx="2" fill="#0084FF" opacity="0.8" class="animate-pulse-glow" />
+                                <!-- Small Logo Dot on Laptop Screen -->
+                                <circle cx="29" cy="15.5" r="3.5" fill="#00F5D4" />
+                                <!-- Laptop Base Keyboard -->
+                                <path d="M -10,32 L 68,32 C 72,32 74,35 72,38 L 64,41 C 63,42 2,42 0,41 L -8,38 C -10,35 -8,32 -10,32 Z" 
+                                      fill="#1E293B" stroke="#00B4D8" stroke-width="1.5" />
+                            </g>
+
+                            <!-- Bottom Connecting Arc Swoosh -->
+                            <path d="M 85,215 C 130,235 180,235 220,210" 
+                                  stroke="url(#orbitGrad)" stroke-width="5" stroke-linecap="round" fill="none" class="glow-teal" />
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Brand Typography Below Logo -->
+                <div id="brand-text-block" class="text-center mt-4">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1">
+                        Mentor<span class="text-brand-cyan">Connect</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm font-medium tracking-widest text-slate-400 uppercase mt-1">
+                        Learn <span class="text-brand-teal">•</span> Grow <span class="text-brand-teal">•</span> Succeed
+                    </p>
+                </div>
+
+                <!-- Dynamic Status Indicator & Progress Bar -->
+                <div class="w-full max-w-md mt-6 px-4">
+                    <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+                        <span id="loading-status-text" class="flex items-center gap-2 font-mono text-brand-cyan">
+                            <i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>
+                            Initializing Socket.IO Real-time Connection...
+                        </span>
+                        <span id="progress-percent-text" class="font-bold text-white font-mono">68%</span>
+                    </div>
+
+                    <!-- Progress Bar Track -->
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/60 shadow-inner">
+                        <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-teal rounded-full transition-all duration-300 shadow-md shadow-brand-teal/30" style="width: 68%;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Canvas Footer Badge -->
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500 z-10">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    MERN Stack WebSockets Ready
+                </span>
+                <span>Optimized Vector SVG (No Images)</span>
+            </div>
+        </section>
+
+        <!-- Right: Interactive Controls & Exporter (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            
+            <!-- Loader Style Selector Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
+                <h3 class="text-base font-semibold text-white flex items-center gap-2 mb-4">
+                    <i data-lucide="layers" class="w-4 h-4 text-brand-cyan"></i>
+                    Loader Animation Variants
+                </h3>
+
+                <div class="grid grid-cols-2 gap-2.5" id="style-selector-group">
+                    <button data-mode="full" class="style-btn active px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-brand-cyan bg-brand-cyan/10 text-white shadow-md shadow-brand-cyan/10">
+                        <span class="font-semibold flex items-center justify-between">
+                            1. Complete Logo
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-brand-teal"></i>
+                        </span>
+                        <span class="text-slate-400 text-[11px]">Full illustration & orbit ring</span>
+                    </button>
+
+                    <button data-mode="pulse" class="style-btn px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700">
+                        <span class="font-semibold flex items-center justify-between">
+                            2. Minimal Orbit
+                            <i data-lucide="circle-dot" class="w-3.5 h-3.5 text-slate-500"></i>
+                        </span>
+                        <span class="text-slate-400 text-[11px]">Subtle fast spinner</span>
+                    </button>
+
+                    <button data-mode="chat" class="style-btn px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700">
+                        <span class="font-semibold flex items-center justify-between">
+                            3. Chat Focus
+                            <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-500"></i>
+                        </span>
+                        <span class="text-slate-400 text-[11px]">Real-time messaging style</span>
+                    </button>
+
+                    <button data-mode="bar" class="style-btn px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700">
+                        <span class="font-semibold flex items-center justify-between">
+                            4. Pulse Emblem
+                            <i data-lucide="activity" class="w-3.5 h-3.5 text-slate-500"></i>
+                        </span>
+                        <span class="text-slate-400 text-[11px]">Clean heartbeat glow</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress & Controls Panel -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4">
+                <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-brand-cyan"></i>
+                    Simulate Loading State
+                </h3>
+
+                <!-- Manual Progress Slider -->
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+                        <label for="progress-range" class="font-medium">Progress Percentage</label>
+                        <span id="slider-val-display" class="font-mono text-brand-teal font-bold">68%</span>
+                    </div>
+                    <input type="range" id="progress-range" min="0" max="100" value="68" 
+                           class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-cyan">
+                </div>
+
+                <!-- Simulation Action Controls -->
+                <div class="flex items-center gap-2 pt-2">
+                    <button id="sim-auto-btn" class="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="play" class="w-3.5 h-3.5 text-brand-teal"></i>
+                        Auto Simulate Fetch
+                    </button>
+                    <button id="sim-complete-btn" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200 transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        100% Finish
+                    </button>
+                </div>
+            </div>
+
+            <!-- Code Snippet & Export Panel -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="code" class="w-4 h-4 text-brand-cyan"></i>
+                        Integration Snippets
+                    </h3>
+                    <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px] font-medium">
+                        <button id="tab-react" class="px-2.5 py-1 rounded-md bg-brand-blue text-white shadow">React JSX</button>
+                        <button id="tab-html" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white">HTML/CSS</button>
+                    </div>
+                </div>
+
+                <!-- Code Block Area -->
+                <div class="relative group">
+                    <pre id="code-snippet-container" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-48 leading-relaxed selection:bg-brand-blue/30"></pre>
+                    
+                    <button id="copy-code-btn" class="absolute top-2.5 right-2.5 p-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition opacity-90 backdrop-blur-md flex items-center gap-1 text-[11px]">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span id="copy-btn-text">Copy Code</span>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500">Copy & paste directly into your React / Next.js layout file or loading spinner component.</p>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- FULLSCREEN PRELOADER OVERLAY MODAL -->
+    <div id="fullscreen-overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center transition-all duration-500 opacity-0 pointer-events-none">
+        
+        <button id="close-overlay-btn" class="absolute top-6 right-6 p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Overlay Central Loader -->
+        <div class="flex flex-col items-center max-w-sm text-center px-4">
+            
+            <!-- Duplicated animated SVG logo for fullscreen preview -->
+            <div class="w-64 h-64 relative mb-4">
+                <svg class="w-full h-full overflow-visible" viewBox="0 0 300 300" fill="none">
+                    <use href="#mentor-connect-svg"></use>
+                </svg>
+            </div>
+
+            <h2 class="text-3xl font-extrabold tracking-tight text-white mb-1">
+                Mentor<span class="text-brand-cyan">Connect</span>
+            </h2>
+            <p class="text-xs font-semibold text-brand-teal tracking-widest uppercase mb-6">Learn • Grow • Succeed</p>
+
+            <!-- Status Indicator -->
+            <div class="w-full space-y-2">
+                <div class="flex justify-between text-xs font-mono text-slate-400">
+                    <span id="overlay-status-text">Matching Mentor Profile...</span>
+                    <span id="overlay-percent-text" class="text-brand-cyan font-bold">84%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div id="overlay-progress-bar" class="h-full bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-teal rounded-full transition-all duration-300" style="width: 84%;"></div>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-500 mt-8">Click X or tap escape to exit preview mode</p>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Realistic App Loading Messages
+        const loadingSteps = [
+            "Initializing Socket.IO Real-time Engine...",
+            "Authenticating JWT Session...",
+            "Fetching Student Academic Profile...",
+            "Running Mentorship Matching Algorithm...",
+            "Loading Industry Mentor Availability...",
+            "Connecting Real-Time Chat Channels...",
+            "Preparing Career Resources & Dashboards...",
+            "MentorConnect Ready!"
+        ];
+
+        // State variables
+        let currentProgress = 68;
+        let isPlaying = true;
+        let activeMode = 'full'; // 'full', 'pulse', 'chat', 'bar'
+        let activeTab = 'react'; // 'react' or 'html'
+        let autoSimInterval = null;
+
+        // DOM Elements
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressPercentText = document.getElementById('progress-percent-text');
+        const progressRange = document.getElementById('progress-range');
+        const sliderValDisplay = document.getElementById('slider-val-display');
+        const loadingStatusText = document.getElementById('loading-status-text');
+        const svgElement = document.getElementById('mentor-connect-svg');
+        const currentModeLabel = document.getElementById('current-mode-label');
+        const codeSnippetContainer = document.getElementById('code-snippet-container');
+        
+        // Fullscreen overlay elements
+        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+        const fullscreenTriggerBtn = document.getElementById('fullscreen-trigger-btn');
+        const closeOverlayBtn = document.getElementById('close-overlay-btn');
+        const overlayProgressBar = document.getElementById('overlay-progress-bar');
+        const overlayPercentText = document.getElementById('overlay-percent-text');
+        const overlayStatusText = document.getElementById('overlay-status-text');
+
+        // Play/Pause & Reset
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Update UI based on percentage
+        function updateProgress(val) {
+            currentProgress = Math.min(100, Math.max(0, val));
+            
+            // Main canvas updates
+            progressBarFill.style.width = currentProgress + '%';
+            progressPercentText.innerText = currentProgress + '%';
+            progressRange.value = currentProgress;
+            sliderValDisplay.innerText = currentProgress + '%';
+
+            // Overlay updates
+            overlayProgressBar.style.width = currentProgress + '%';
+            overlayPercentText.innerText = currentProgress + '%';
+
+            // Dynamic status message selection based on percentage tier
+            const msgIndex = Math.min(
+                loadingSteps.length - 1, 
+                Math.floor((currentProgress / 100) * loadingSteps.length)
+            );
+            const statusMsg = loadingSteps[msgIndex];
+
+            loadingStatusText.innerHTML = `
+                <i data-lucide="${currentProgress === 100 ? 'check-circle-2' : 'loader'}" class="w-3.5 h-3.5 ${currentProgress === 100 ? 'text-emerald-400' : 'animate-spin'}"></i>
+                ${statusMsg}
+            `;
+            overlayStatusText.innerText = statusMsg;
+
+            lucide.createIcons();
+        }
+
+        // Mode Switcher Functionality
+        function setLoaderMode(mode) {
+            activeMode = mode;
+            const orbitRing1 = document.getElementById('orbit-ring-1');
+            const orbitRing2 = document.getElementById('orbit-ring-2');
+            const brandTextBlock = document.getElementById('brand-text-block');
+
+            // Reset initial visibility
+            if(orbitRing1) orbitRing1.style.display = 'block';
+            if(orbitRing2) orbitRing2.style.display = 'block';
+            if(brandTextBlock) brandTextBlock.style.display = 'block';
+
+            // Button active styles
+            document.querySelectorAll('#style-selector-group button').forEach(btn => {
+                if (btn.getAttribute('data-mode') === mode) {
+                    btn.className = "style-btn active px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-brand-cyan bg-brand-cyan/10 text-white shadow-md shadow-brand-cyan/10";
+                } else {
+                    btn.className = "style-btn px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all flex flex-col gap-1 border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700";
+                }
+            });
+
+            switch(mode) {
+                case 'full':
+                    currentModeLabel.innerText = "Full Brand Logo Animation";
+                    svgElement.style.transform = "scale(1)";
+                    break;
+                case 'pulse':
+                    currentModeLabel.innerText = "Minimal Orbit Spinner";
+                    svgElement.style.transform = "scale(0.9)";
+                    break;
+                case 'chat':
+                    currentModeLabel.innerText = "Real-Time Chat Focus Mode";
+                    svgElement.style.transform = "scale(1.05)";
+                    break;
+                case 'bar':
+                    currentModeLabel.innerText = "Pulse Emblem Mode";
+                    svgElement.style.transform = "scale(0.95)";
+                    break;
+            }
+
+            renderCodeSnippet();
+        }
+
+        // Slider Input Event
+        progressRange.addEventListener('input', (e) => {
+            updateProgress(parseInt(e.target.value));
+        });
+
+        // Mode selector clicks
+        document.querySelectorAll('#style-selector-group button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setLoaderMode(btn.getAttribute('data-mode'));
+            });
+        });
+
+        // Auto Simulation Handler
+        document.getElementById('sim-auto-btn').addEventListener('click', () => {
+            if (autoSimInterval) clearInterval(autoSimInterval);
+            updateProgress(0);
+            
+            autoSimInterval = setInterval(() => {
+                if (currentProgress < 100) {
+                    updateProgress(currentProgress + Math.floor(Math.random() * 8) + 3);
+                } else {
+                    clearInterval(autoSimInterval);
+                }
+            }, 300);
+        });
+
+        // Complete 100% Handler
+        document.getElementById('sim-complete-btn').addEventListener('click', () => {
+            if (autoSimInterval) clearInterval(autoSimInterval);
+            updateProgress(100);
+        });
+
+        // Play/Pause Button
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if(isPlaying) {
+                svgElement.classList.remove('paused');
+                playPauseBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i>`;
+            } else {
+                svgElement.classList.add('paused');
+                playPauseBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i>`;
+            }
+            lucide.createIcons();
+        });
+
+        // Reset Button
+        resetBtn.addEventListener('click', () => {
+            if (autoSimInterval) clearInterval(autoSimInterval);
+            updateProgress(0);
+        });
+
+        // Fullscreen Modal Controls
+        fullscreenTriggerBtn.addEventListener('click', () => {
+            fullscreenOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            fullscreenOverlay.classList.add('opacity-100', 'pointer-events-auto');
+        });
+
+        const closeOverlay = () => {
+            fullscreenOverlay.classList.add('opacity-0', 'pointer-events-none');
+            fullscreenOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+        };
+
+        closeOverlayBtn.addEventListener('click', closeOverlay);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeOverlay();
+        });
+
+        // React vs HTML Code snippet generation
+        const reactCode = `import React from 'react';
+
+export const MentorConnectLoader = ({ progress = 68, message = "Loading..." }) => {
+  return (
+    <div className="flex flex-col items-center justify-center p-6 bg-slate-950 text-white rounded-2xl">
+      {/* Animated Brand SVG Icon */}
+      <div className="w-64 h-64 relative">
+        <svg class="w-full h-full animate-pulse-glow" viewBox="0 0 300 300" fill="none">
+          {/* Outer Orbit Rings */}
+          <circle cx="150" cy="150" r="125" stroke="url(#orbitGrad)" strokeWidth="5" strokeDasharray="180 120" className="animate-spin origin-center" />
+          
+          {/* Student & Mentor Brand Mark */}
+          <g className="animate-bounce-subtle">
+            {/* Student Silhouette */}
+            <circle cx="110" cy="120" r="22" fill="#0084FF" />
+            {/* Mentor with Graduation Cap */}
+            <circle cx="200" cy="118" r="24" fill="#13315C" />
+            <path d="M 162,102 L 200,84 L 238,102 L 200,116 Z" fill="#0B2545" stroke="#00B4D8" strokeWidth="2" />
+          </g>
+        </svg>
+      </div>
+
+      {/* Brand Typography */}
+      <h3 className="text-2xl font-bold tracking-tight mt-2">
+        Mentor<span className="text-cyan-400">Connect</span>
+      </h3>
+      <p className="text-xs uppercase tracking-widest text-emerald-400 mb-4">Learn • Grow • Succeed</p>
+
+      {/* Progress Bar & Status */}
+      <div className="w-full max-w-xs space-y-1.5">
+        <div className="flex justify-between text-xs font-mono text-slate-400">
+          <span>{message}</span>
+          <span className="text-cyan-400 font-bold">{progress}%</span>
+        </div>
+        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-300" style={{ width: \`\${progress}%\` }}></div>
+        </div>
+      </div>
+    </div>
+  );
+};`;
+
+        const htmlCode = `<!-- MentorConnect Animated Loader Container -->
+<div class="mentor-loader-box">
+  <svg class="mentor-svg-spinner" viewBox="0 0 300 300">
+    <circle cx="150" cy="150" r="125" stroke="url(#orbitGrad)" stroke-width="5" fill="none" class="spin-ring" />
+    <text x="50%" y="85%" text-anchor="middle" fill="#ffffff" font-weight="bold" font-size="22">
+      MentorConnect
+    </text>
+  </svg>
+  <div class="progress-bar-container">
+    <div class="progress-fill" style="width: 68%;"></div>
+  </div>
+</div>
+
+<style>
+  .spin-ring { transform-origin: center; animation: spin 4s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>`;
+
+        function renderCodeSnippet() {
+            codeSnippetContainer.textContent = activeTab === 'react' ? reactCode : htmlCode;
+        }
+
+        // Code Tab Toggles
+        document.getElementById('tab-react').addEventListener('click', (e) => {
+            activeTab = 'react';
+            e.target.className = "px-2.5 py-1 rounded-md bg-brand-blue text-white shadow";
+            document.getElementById('tab-html').className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-white";
+            renderCodeSnippet();
+        });
+
+        document.getElementById('tab-html').addEventListener('click', (e) => {
+            activeTab = 'html';
+            e.target.className = "px-2.5 py-1 rounded-md bg-brand-blue text-white shadow";
+            document.getElementById('tab-react').className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-white";
+            renderCodeSnippet();
+        });
+
+        // Copy Code Button
+        document.getElementById('copy-code-btn').addEventListener('click', () => {
+            const codeText = codeSnippetContainer.textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const btnText = document.getElementById('copy-btn-text');
+                btnText.innerText = "Copied!";
+                setTimeout(() => { btnText.innerText = "Copy Code"; }, 2000);
+            });
+        });
+
+        // Initial setup
+        updateProgress(68);
+        renderCodeSnippet();
+
+    </script>
+</body>
+</html>

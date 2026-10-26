@@ -1,15 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import BrandLoader from './BrandLoader';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="auth-loading-container">
-        <div className="auth-spinner"></div>
-      </div>
-    );
+    return <BrandLoader fullScreen={true} />;
   }
 
   // 1. Unauthenticated users redirected to /login

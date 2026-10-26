@@ -615,11 +615,13 @@ function LandingPage() {
       <footer className="footer">
         <div className="container footer-grid">
           <div className="footer-brand">
-            <h3>
-              <div className="logo-icon-wrapper" style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: '6px' }}>
-                <GraduationCap size={18} strokeWidth={2.5} />
-              </div>
-              MentorConnect
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img
+                src="/logo.png"
+                alt="MentorConnect"
+                style={{ width: '26px', height: '26px', borderRadius: '6px', objectFit: 'contain' }}
+              />
+              <span>MentorConnect</span>
             </h3>
             <p>
               Connecting students with suitable mentors to bridge the gap between academic 

@@ -82,9 +82,17 @@ const RegisterPage = () => {
       <div className="auth-card" style={{ maxWidth: '520px' }}>
         <div className="auth-card-header">
           <Link to="/" className="auth-logo">
-            <div className="logo-icon-wrapper">
-              <GraduationCap size={22} strokeWidth={2.5} />
-            </div>
+            <img
+              src="/logo.png"
+              alt="MentorConnect"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
             <span>MentorConnect</span>
           </Link>
           <h2>Create your account</h2>

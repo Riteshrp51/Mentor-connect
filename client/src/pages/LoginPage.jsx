@@ -61,9 +61,17 @@ const LoginPage = () => {
       <div className="auth-card">
         <div className="auth-card-header">
           <Link to="/" className="auth-logo">
-            <div className="logo-icon-wrapper">
-              <GraduationCap size={22} strokeWidth={2.5} />
-            </div>
+            <img
+              src="/logo.png"
+              alt="MentorConnect"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
             <span>MentorConnect</span>
           </Link>
           <h2>Welcome back!</h2>
@@ -137,9 +145,6 @@ const LoginPage = () => {
               <span className="checkmark"></span>
               Remember me
             </label>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Password: <code>123456</code>
-            </span>
           </div>
 
           <button
@@ -157,79 +162,6 @@ const LoginPage = () => {
             )}
           </button>
         </form>
-
-        {/* 1-Click Demo Accounts for Quick Presentation Login */}
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-          <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px', textAlign: 'center' }}>
-            ⚡ 1-Click Demo Login (For Presentation)
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', fontSize: '12px', justifyContent: 'flex-start', padding: '8px 12px' }}
-              onClick={() => {
-                setEmail('sneha.student@example.com');
-                setPassword('123456');
-                login('sneha.student@example.com', '123456', true);
-              }}
-            >
-              🎓 <strong>Demo Student:</strong> Sneha Kapoor (student)
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', fontSize: '12px', justifyContent: 'flex-start', padding: '8px 12px' }}
-              onClick={() => {
-                setEmail('sarah.jenkins@example.com');
-                setPassword('123456');
-                login('sarah.jenkins@example.com', '123456', true);
-              }}
-            >
-              👩‍🏫 <strong>Demo Mentor:</strong> Dr. Sarah Jenkins (Google)
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', fontSize: '12px', justifyContent: 'flex-start', padding: '8px 12px' }}
-              onClick={() => {
-                setEmail('alex.rivera@example.com');
-                setPassword('123456');
-                login('alex.rivera@example.com', '123456', true);
-              }}
-            >
-              👨‍🏫 <strong>Demo Mentor:</strong> Alex Rivera (Netflix)
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', fontSize: '12px', justifyContent: 'flex-start', padding: '8px 12px' }}
-              onClick={() => {
-                setEmail('priya.patel@example.com');
-                setPassword('123456');
-                login('priya.patel@example.com', '123456', true);
-              }}
-            >
-              👩‍💼 <strong>Demo Mentor:</strong> Priya Patel (Airbnb)
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', fontSize: '12px', justifyContent: 'flex-start', padding: '8px 12px' }}
-              onClick={() => {
-                setEmail('marcus.chen@example.com');
-                setPassword('123456');
-                login('marcus.chen@example.com', '123456', true);
-              }}
-            >
-              👨‍💻 <strong>Demo Mentor:</strong> Marcus Chen (AWS)
-            </button>
-          </div>
-        </div>
 
         <div className="auth-card-footer">
           <p>
