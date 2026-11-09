@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   UserCheck,
   UserX,
-  ExternalLink,
 } from 'lucide-react';
 
 const LinkedinIcon = ({ size = 14 }) => (

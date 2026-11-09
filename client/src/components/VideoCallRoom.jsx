@@ -13,9 +13,6 @@ import {
   Check,
   Send,
   Download,
-  Users,
-  Sparkles,
-  Maximize2
 } from 'lucide-react';
 import './VideoCallRoom.css';
 
@@ -44,7 +41,7 @@ const VideoCallRoom = ({ session, user, onClose }) => {
 
   // Call states
   const [remotePeer, setRemotePeer] = useState(null);
-  const [peerSocketId, setPeerSocketId] = useState(null);
+  const [_peerSocketId, setPeerSocketId] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting', 'connected', 'waiting'
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -61,6 +58,14 @@ const VideoCallRoom = ({ session, user, onClose }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const isSidebarOpenRef = useRef(isSidebarOpen);
+  const activeTabRef = useRef(activeTab);
+
+  useEffect(() => {
+    isSidebarOpenRef.current = isSidebarOpen;
+    activeTabRef.current = activeTab;
+  }, [isSidebarOpen, activeTab]);
+
   const [notes, setNotes] = useState(() => {
     return localStorage.getItem(`mentorconnect_notes_${roomCode}`) || '';
   });
@@ -306,7 +311,7 @@ const VideoCallRoom = ({ session, user, onClose }) => {
         // 7. Socket event: in-call message
         socket.on('receive_call_message', (msg) => {
           setChatMessages((prev) => [...prev, msg]);
-          if (!isSidebarOpen || activeTab !== 'chat') {
+          if (!isSidebarOpenRef.current || activeTabRef.current !== 'chat') {
             setUnreadChatCount((prev) => prev + 1);
           }
         });
@@ -362,6 +367,7 @@ const VideoCallRoom = ({ session, user, onClose }) => {
         pcRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode]);
 
   // Media Controls: Mic Mute / Unmute

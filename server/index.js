@@ -247,6 +247,10 @@ io.on('connection', (socket) => {
 });
 
 // Mount Routes
+app.get('/', (req, res) => {
+  res.status(200).send('MentorConnect Backend API is Live');
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -264,7 +268,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api', mentorRoutes);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err.stack);
 
   let error = { ...err };

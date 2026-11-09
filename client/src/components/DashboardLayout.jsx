@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -14,7 +14,6 @@ import {
   X,
   Moon,
   Sun,
-  GraduationCap,
   FileText,
 } from 'lucide-react';
 import ProfileSettingsModal from './ProfileSettingsModal';
@@ -73,35 +72,35 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
   };
 
   // Fetch count of chats having unread messages
-  const fetchUnreadSummary = async () => {
+  const fetchUnreadSummary = useCallback(async () => {
     try {
       const res = await api.get('/api/conversations/unread-summary');
       if (res.data && res.data.status === 'success') {
         setUnreadChatsCount(res.data.data.unreadChatsCount || 0);
       }
-    } catch (err) {
+    } catch {
       // Quiet fail
     }
-  };
+  }, []);
 
   // Fetch real notifications from database
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await api.get('/api/notifications');
       if (res.data && res.data.status === 'success') {
         const raw = res.data.data.notifications || [];
         setNotifications(raw.map((n) => mapNotification(n, user?.role || 'student')));
       }
-    } catch (err) {
+    } catch {
       // Quiet fail
     }
-  };
+  }, [user?.role]);
 
   const handleClearAllNotifications = async () => {
     try {
       await api.delete('/api/notifications');
       setNotifications([]);
-    } catch (err) {
+    } catch {
       setNotifications([]);
     }
   };
@@ -110,7 +109,7 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
     try {
       await api.patch('/api/notifications/mark-read');
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
+    } catch {
       // Quiet fail
     }
   };
@@ -164,7 +163,7 @@ const DashboardLayout = ({ theme, onToggleTheme }) => {
         socket.off('session_created');
       }
     };
-  }, [user?._id]);
+  }, [user?._id, user?.role, fetchUnreadSummary, fetchNotifications]);
 
   const handleLogout = async () => {
     await logout();

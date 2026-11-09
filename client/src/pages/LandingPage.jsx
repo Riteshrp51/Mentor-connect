@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Search,
   Zap,
-  GraduationCap
 } from 'lucide-react';
 import MentorProfileModal from '../components/MentorProfileModal';
 import RequestMentorshipModal from '../components/RequestMentorshipModal';
@@ -682,12 +681,19 @@ function LandingPage() {
         </div>
       </footer>
 
+      {/* Toast Notification */}
+      {requestToast && (
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, backgroundColor: '#10b981', color: '#fff', padding: '12px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontWeight: '600' }}>
+          {requestToast}
+        </div>
+      )}
+
       {/* Detailed Mentor Profile Modal */}
       <MentorProfileModal
         mentor={selectedMentorForPreview}
         isOpen={Boolean(selectedMentorForPreview)}
         onClose={() => setSelectedMentorForPreview(null)}
-        onRequestMentorship={(mentor) => {
+        onRequestMentorship={() => {
           setSelectedMentorForPreview(null);
           navigate('/login');
         }}

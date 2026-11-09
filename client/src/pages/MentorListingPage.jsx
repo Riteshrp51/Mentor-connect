@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Star, Briefcase, MapPin, FilterX, ChevronLeft, ChevronRight, UserCheck, Clock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -257,7 +257,7 @@ const MentorListingPage = () => {
     fetchMentors();
   }, [filters.search, filters.skills, filters.domain, filters.minExperience, filters.maxExperience, filters.company, filters.minRating, filters.page, filters.limit]);
 
-  const fetchSentRequests = async () => {
+  const fetchSentRequests = useCallback(async () => {
     if (!user || user.role !== 'student') return;
     try {
       const res = await api.get('/api/requests/sent');
@@ -267,11 +267,11 @@ const MentorListingPage = () => {
     } catch (err) {
       console.error('Failed to load sent requests in mentor directory:', err);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchSentRequests();
-  }, [user]);
+  }, [fetchSentRequests]);
 
   const getMentorConnectionStatus = (mentor) => {
     if (!mentor || !user || user.role !== 'student' || !sentRequests.length) return null;

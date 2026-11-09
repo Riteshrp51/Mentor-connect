@@ -10,10 +10,8 @@ import {
   Video,
   Plus,
   CheckCircle2,
-  MessageSquare,
   Sparkles,
   Star,
-  Download,
   Copy,
   Check,
   Eye,
@@ -28,7 +26,7 @@ import './SessionsPage.css';
 const SessionsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming', 'past', 'calendar'
   const [quickJoinCode, setQuickJoinCode] = useState('');
@@ -142,6 +140,7 @@ const SessionsPage = () => {
         socket.off('session_cancelled', handleSessionCancelled);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-launch room if ?room=... is passed in URL
@@ -162,7 +161,7 @@ const SessionsPage = () => {
         });
       }
     }
-  }, [searchParams, sessions, activeCallSession]);
+  }, [searchParams, sessions, activeCallSession, isStudent, user?.name]);
 
   const upcomingSessions = sessions.filter((s) => !getSessionTiming(s).isExpired && s.status !== 'cancelled');
   const pastSessions = sessions.filter((s) => getSessionTiming(s).isExpired || s.status === 'completed' || s.status === 'expired');

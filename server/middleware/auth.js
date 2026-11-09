@@ -37,7 +37,7 @@ export const protect = async (req, res, next) => {
     }
 
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({
       status: 'error',
       message: 'Not authorized to access this route',

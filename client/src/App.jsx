@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LoadingProvider } from './context/LoadingContext';
-import BrandLoader from './components/BrandLoader';
+// import BrandLoader from './components/BrandLoader';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -21,6 +21,7 @@ function AppContent({ theme, toggleTheme }) {
   const location = useLocation();
   const isDashboardRoute = location.pathname.startsWith('/student') || location.pathname.startsWith('/mentor');
 
+  /*
   // Initial website open loader
   const [initialLoading, setInitialLoading] = useState(true);
   // Route change transition loader
@@ -46,10 +47,11 @@ function AppContent({ theme, toggleTheme }) {
       return () => clearTimeout(timer);
     }
   }, [location.pathname]);
+  */
 
   return (
     <>
-      {(initialLoading || routeTransitioning) && <BrandLoader fullScreen={true} />}
+      {/* {(initialLoading || routeTransitioning) && <BrandLoader fullScreen={true} />} */}
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {!isDashboardRoute && <Navbar theme={theme} onToggleTheme={toggleTheme} />}
         <div style={{ flexGrow: 1, display: isDashboardRoute ? 'flex' : 'block' }}>

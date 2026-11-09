@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import BrandLoader from '../components/BrandLoader';
+// import BrandLoader from '../components/BrandLoader';
 
 const LoadingContext = createContext();
 
@@ -50,7 +50,7 @@ export const LoadingProvider = ({ children }) => {
   return (
     <LoadingContext.Provider value={{ isLoading, showLoader, hideLoader, withLoading }}>
       {children}
-      {isLoading && <BrandLoader fullScreen={true} />}
+      {/* {isLoading && <BrandLoader fullScreen={true} />} */}
     </LoadingContext.Provider>
   );
 };

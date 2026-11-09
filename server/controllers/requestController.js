@@ -226,7 +226,7 @@ export const getReceivedRequests = async (req, res, next) => {
  * @route   PATCH /api/requests/:id/accept
  * @access  Private (Mentor only)
  */
-export const acceptRequest = async (req, res, next) => {
+export const acceptRequest = async (req, res, _next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -264,13 +264,13 @@ export const acceptRequest = async (req, res, next) => {
     try {
       session.startTransaction();
       useTransaction = true;
-    } catch (txStartErr) {
+    } catch {
       // Standalone MongoDB without replica set does not support transactions
       useTransaction = false;
       await session.endSession();
       session = null;
     }
-  } catch (sessionErr) {
+  } catch {
     useTransaction = false;
     session = null;
   }

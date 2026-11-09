@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -78,7 +78,7 @@ const MessagesPage = () => {
   };
 
   // Helper to reliably get the other participant in a conversation
-  const getOtherParticipant = (conv) => {
+  const getOtherParticipant = useCallback((conv) => {
     if (!conv || !conv.participants || !Array.isArray(conv.participants)) return null;
 
     const myId = (user?._id || user?.id || '')?.toString();
@@ -107,7 +107,7 @@ const MessagesPage = () => {
 
     // 3. Fallback
     return conv.participants.length > 1 ? conv.participants[1] : conv.participants[0];
-  };
+  }, [user]);
 
   // 1. Fetch conversations list
   const fetchConversations = async () => {
@@ -163,6 +163,7 @@ const MessagesPage = () => {
     };
 
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlRequestId, urlConvId]);
 
   // 2. Fetch messages for active conversation
@@ -493,7 +494,7 @@ const MessagesPage = () => {
       const query = searchQuery.toLowerCase();
       return name.toLowerCase().includes(query) || topic.toLowerCase().includes(query);
     });
-  }, [conversations, searchQuery, user]);
+  }, [conversations, searchQuery, getOtherParticipant]);
 
   const activeOtherParticipant = getOtherParticipant(activeConversation);
 

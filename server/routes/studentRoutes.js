@@ -1,7 +1,6 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/auth.js';
 import MentorshipRequest from '../models/MentorshipRequest.js';
-import Notification from '../models/Notification.js';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import Session from '../models/Session.js';

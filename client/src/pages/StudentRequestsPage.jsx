@@ -9,11 +9,7 @@ import {
   Search,
   RefreshCw,
   MessageSquare,
-  ChevronRight,
-  ExternalLink,
   Ban,
-  Calendar,
-  Briefcase,
 } from 'lucide-react';
 import api from '../api/axios';
 

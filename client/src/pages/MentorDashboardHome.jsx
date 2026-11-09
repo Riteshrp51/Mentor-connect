@@ -20,7 +20,6 @@ import {
   Video,
   Copy,
   Eye,
-  Plus,
 } from 'lucide-react';
 import { getSessionTiming } from '../utils/sessionTiming';
 import ProfileSettingsModal from '../components/ProfileSettingsModal';
